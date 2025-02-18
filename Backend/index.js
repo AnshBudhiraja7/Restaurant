@@ -6,6 +6,7 @@ const fs=require("fs")
 const Connection=require("./Connection")
 const User=require("./Model/UserModel")
 const Menu=require("./Model/MenuModel")
+const Order=require("./Model/OrderModel")
 const app=express()
 app.use(cors())
 app.use(express.json())
@@ -52,7 +53,7 @@ app.post("/login",async(req,resp)=>{
        const existingUser=await User.findOne({email})
        if(existingUser){
             if(existingUser.password==password){
-                resp.status(200).send({message:"Login Successfully",id:existingUser._id})
+                resp.status(202).send({message:"Login Successfully",id:existingUser._id})
             }
             else{
                 resp.status(401).send({message:"Invalid Password"})
@@ -117,6 +118,90 @@ app.delete("/deleteMenu/:id",async(req,resp)=>{
 })
 
 
+
+app.post("/createOrder",async(req,resp)=>{
+    const {name,phone,email,orderlist}=req.body
+
+    if(name && phone && email && orderlist && orderlist.length>0){
+        
+        let balance=0
+        orderlist.map((item)=>{
+            const amount=item.price*item.quantity
+            item.amount=amount
+            balance=balance+amount   
+            // balance+=amount
+        })
+
+        const newOrder=await Order.create({name,phone,email,orderlist,balance})
+        resp.status(201).send({message:"Order generated successfully",newOrder})
+    }
+    else{
+        resp.status(404).send({message:"Field is Empty"})
+    }
+})
+app.get("/getAllOrders",async(req,resp)=>{
+    const allOrders=await Order.find()
+    if(allOrders && allOrders.length>0){
+        resp.status(202).send({message:"Orders fetched successfully",allOrders})
+    }
+    else{
+        resp.status(404).send({message:"No Order found"})
+    }
+})
+
+
+
+app.put("/orderAccepted/:id",async(req,resp)=>{
+    const {id}=req.params
+
+    if(mongoose.isValidObjectId(id)){
+       const existingOrder=await Order.findOne({_id:id})
+       if(existingOrder){
+        const updatedOrder=await Order.updateOne({_id:id},{$set:{status:"Accepted"}})
+        resp.status(202).send({message:"This order is accepted",updatedOrder})
+       }
+       else{
+        resp.status(404).send({message:"Order not found"})
+       }
+    }
+    else{
+        resp.status(401).send({message:"Invalid Object id"})
+    }
+})
+app.put("/orderRejected/:id",async(req,resp)=>{
+    const {id}=req.params
+    
+    if(mongoose.isValidObjectId(id)){
+       const existingOrder=await Order.findOne({_id:id})
+       if(existingOrder){
+        const updatedOrder=await Order.updateOne({_id:id},{$set:{status:"Rejected"}})
+        resp.status(202).send({message:"This order is Rejected",updatedOrder})
+       }
+       else{
+        resp.status(404).send({message:"Order not found"})
+       }
+    }
+    else{
+        resp.status(401).send({message:"Invalid Object id"})
+    }
+})
+app.put("/orderCompleted/:id",async(req,resp)=>{
+    const {id}=req.params
+    
+    if(mongoose.isValidObjectId(id)){
+       const existingOrder=await Order.findOne({_id:id})
+       if(existingOrder){
+        const updatedOrder=await Order.updateOne({_id:id},{$set:{status:"Completed"}})
+        resp.status(202).send({message:"This order is Completed",updatedOrder})
+       }
+       else{
+        resp.status(404).send({message:"Order not found"})
+       }
+    }
+    else{
+        resp.status(401).send({message:"Invalid Object id"})
+    }
+})
 
 
 app.listen(PORT,()=>{
