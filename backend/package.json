@@ -1,0 +1,11 @@
+{
+  "name": "resturant",
+  "version": "1.0.0",
+  "description": "This is the project of food items",
+  "main": "index.js",
+  "scripts": {
+    "test": "nodemon index.js"
+  },
+  "author": "Ansh Budhiraja",
+  "license": "ISC"
+}
