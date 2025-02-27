@@ -1,9 +1,11 @@
 const express =require("express")
 const { handleResponse, handleError } = require("../Responses/Responses")
 const Users=require("../Tables/UserTable")
+const Category=require("../Tables/CategoryTable")
 const { generateotp, verifyotp } = require("../Services/OTPService/OTPService")
 const { otptoemailforverification } = require("../Services/EmailService/EmailService")
 const jwt=require("jsonwebtoken")
+const {checkUserDetails} = require("../Middlewares/CheckUserDetails")
 const Routes=express.Router()
 Routes.get("/",(req,resp)=>resp.status(200).send({message:"Server Health is Okay!"}))
 
@@ -56,5 +58,38 @@ Routes.post("/login",(req,resp)=>{
         return handleResponse(resp,202,"Login Successfully",{token,role:results[0].role})
     })
 })
+
+
+Routes.post('/createCategory',checkUserDetails,(req, resp) => {
+    const { name } = req.body;
+
+    if (!name) return handleResponse(resp,404,"Category name is required")
+
+     // Check if category exists
+     const checkQuery = `SELECT id FROM ${process.env.CATEGORY_TABLE} WHERE name = '${name}'`;
+     Category.query(checkQuery, (error, results) => {
+         if (error) return handleError(resp,error)
+ 
+         if (results.length !== 0) {
+            return handleResponse(resp,400,"This Category already exists.")
+         }
+ 
+         // Insert if not exists
+         const insertQuery = `INSERT INTO ${process.env.CATEGORY_TABLE} (name,user_id) VALUES (?,?)`;
+         Category.query(insertQuery, [name,req.user.id], (error, result) => {
+             if (error) return handleError(resp,error)
+ 
+             return handleResponse(resp,201,"Category Created Successfully",result)
+         });
+     });
+});
+Routes.get('/getAllCategories',checkUserDetails,(req, resp) => {
+    const Query = `SELECT * FROM ${process.env.CATEGORY_TABLE} where user_id=?`;
+
+    Category.query(Query,[req.user.id],(error, results) => {
+        if (error) return handleError(resp,error)
+        return handleResponse(resp,202,"Categories fetched successfully",results)
+    });
+});
 
 module.exports=Routes
