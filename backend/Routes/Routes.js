@@ -128,7 +128,7 @@ Routes.post("/addMenus",checkUserDetails,upload.single("image"),(req,resp)=>{
     
    if(!req.file) return handleResponse(resp,404,"Plz upload the image")
 
-    const categoryQuery=`Select id from ${process.env.CATEGORY_TABLE} where name='${category}'`
+    const categoryQuery=`Select id from ${process.env.CATEGORY_TABLE} where name='${category}' and user_id='${req.user.id}'`
     Category.query(categoryQuery,(error,results)=>{
         if(error){
             deleteImage("./uploads/"+req.file.filename)
@@ -141,8 +141,8 @@ Routes.post("/addMenus",checkUserDetails,upload.single("image"),(req,resp)=>{
         
         const category_id=results[0].id
         
-        const insertQuery=`INSERT INTO ${process.env.MENU_TABLE} (itemname, price, category_id, description, image) VALUES (?, ?, ?, ?, ?)`
-        Menu.query(insertQuery,[itemname,price,category_id,description,"./uploads/"+req.file.filename],(error,result)=>{
+        const insertQuery=`INSERT INTO ${process.env.MENU_TABLE} (itemname, price, category_id, description, image, user_id) VALUES (?, ?, ?, ?, ?, ?)`
+        Menu.query(insertQuery,[itemname,price,category_id,description,"./uploads/"+req.file.filename,req.user.id],(error,result)=>{
             if(error) {
                 deleteImage("./uploads/"+req.file.filename)
                 return handleError(resp,error)
@@ -153,7 +153,7 @@ Routes.post("/addMenus",checkUserDetails,upload.single("image"),(req,resp)=>{
 })
 
 Routes.get('/getAllItems',checkUserDetails,(req, resp) => {
-    const query=`SELECT menu_items.id, menu_items.itemname, menu_items.image, menu_items.price, menu_items.description, menu_items.category_id,categories.name AS category_name FROM menu_items JOIN categories ON menu_items.category_id = categories.id ORDER BY menu_items.id ASC`
+    const query=`SELECT menu_items.id, menu_items.itemname, menu_items.image, menu_items.price, menu_items.description, menu_items.category_id,categories.name AS category_name FROM menu_items JOIN categories ON menu_items.category_id = categories.id where menu_items.user_id='${req.user.id}' ORDER BY menu_items.id ASC`
    
     Menu.query(query, (error, results) => {
         if (error) return handleError(resp,error);
@@ -161,6 +161,29 @@ Routes.get('/getAllItems',checkUserDetails,(req, resp) => {
         return handleResponse(resp,202,"Fetched successfully",results)
     });
 });
+
+Routes.get('/getAllItem/:category',checkUserDetails,(req, resp) => {
+    const {category}=req.params
+    if(!category) return handleResponse(resp,404,"Category is required")
+    
+    const CategoryQuery=`Select id from ${process.env.CATEGORY_TABLE} where name=? and user_id=?`
+    Category.query(CategoryQuery,[category,req.user.id],(error,results)=>{
+        if (error) return handleError(resp,error)
+        if(results.length===0) return handleResponse(resp,400,"Category is not found")
+        
+        const category_id=results[0].id
+
+        const query=`SELECT menu_items.id, menu_items.itemname, menu_items.image, menu_items.price, menu_items.description, menu_items.category_id, categories.name AS category_name FROM menu_items JOIN categories ON menu_items.category_id = categories.id where menu_items.user_id='${req.user.id}' and menu_items.category_id='${category_id}' ORDER BY menu_items.id ASC`
+        Menu.query(query, (error, responses) => {
+            if (error) return handleError(resp,error);
+            
+            if(responses.length===0) return handleResponse(resp,400,"Table is empty")
+            return handleResponse(resp,202,"Fetched successfully",responses)
+        });
+    })
+});
+
+
 
 
 // api prepared for the batch
