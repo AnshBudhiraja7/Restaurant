@@ -13,6 +13,7 @@ const {checkUserDetails} = require("../Middlewares/CheckUserDetails")
 
 const Routes=express.Router()
 
+// multer storage
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
         fs.mkdir("./uploads/",{recursive:true},(err)=>{
@@ -25,6 +26,7 @@ const storage = multer.diskStorage({
     }
 });
 const upload=multer({storage:storage})
+// delete image from server
 const deleteImage=(path)=>{
     fs.unlink(path,(error)=>{
         if(error) console.log("Error Occured in deleting the image:"+error);        
@@ -34,6 +36,8 @@ const deleteImage=(path)=>{
 
 Routes.get("/",(req,resp)=>resp.status(200).send({message:"Server Health is Okay!"}))
 
+// superadmin 
+// otp send to email
 Routes.post("/verifyUser",async(req,resp)=>{
     const {name,phone,email,password}=req.body
     if(!name || !phone || !email || !password) return handleResponse(resp,404,"All fields are required")
@@ -46,7 +50,7 @@ Routes.post("/verifyUser",async(req,resp)=>{
         return await otptoemailforverification(resp,email,otp)
     })
 })
-
+// verify otp from email
 Routes.post("/createUser",async(req,resp)=>{
     const {name,phone,email,password,otp}=req.body
     if(!name || !phone || !email || !password) return handleResponse(resp,404,"All fields are required")
@@ -66,7 +70,7 @@ Routes.post("/createUser",async(req,resp)=>{
         })
     })
 })
-
+// login
 Routes.post("/login",(req,resp)=>{
     const {email,password}=req.body
     if(!email || !password) return handleResponse(resp,404,"All fields are required")
@@ -84,7 +88,8 @@ Routes.post("/login",(req,resp)=>{
     })
 })
 
-
+// owner
+// create category
 Routes.post('/createCategory',checkUserDetails,(req, resp) => {
     const { name } = req.body;
 
@@ -108,6 +113,7 @@ Routes.post('/createCategory',checkUserDetails,(req, resp) => {
          });
      });
 });
+// get All Category
 Routes.get('/getAllCategories',checkUserDetails,(req, resp) => {
     const Query = `SELECT * FROM ${process.env.CATEGORY_TABLE} where user_id=?`;
 
@@ -117,6 +123,7 @@ Routes.get('/getAllCategories',checkUserDetails,(req, resp) => {
     });
 });
 
+//add menu by owner
 Routes.post("/addMenus",checkUserDetails,upload.single("image"),(req,resp)=>{
    const { itemname, price, category,description} = req.body;
    
@@ -150,7 +157,7 @@ Routes.post("/addMenus",checkUserDetails,upload.single("image"),(req,resp)=>{
         })  
     })
 })
-
+// get All menu for owner
 Routes.get('/getAllItems',checkUserDetails,(req, resp) => {
     const query=`SELECT menu_items.id, menu_items.itemname, menu_items.image, menu_items.price, menu_items.description, menu_items.category_id,categories.name AS category_name FROM menu_items JOIN categories ON menu_items.category_id = categories.id where menu_items.user_id='${req.user.id}' ORDER BY menu_items.id ASC`
    
@@ -160,7 +167,7 @@ Routes.get('/getAllItems',checkUserDetails,(req, resp) => {
         return handleResponse(resp,202,"Fetched successfully",results)
     });
 });
-
+// get All menu for owner but for a particular category
 Routes.get('/getAllItem/:category',checkUserDetails,(req, resp) => {
     const {category}=req.params
     if(!category) return handleResponse(resp,404,"Category is required")
@@ -182,7 +189,7 @@ Routes.get('/getAllItem/:category',checkUserDetails,(req, resp) => {
     })
 });
 
-
+// delete menu by owner
 Routes.delete('/deleteItem/:id',checkUserDetails,(req, resp) => {
     const { id } = req.params;
     if (isNaN(id)) return handleResponse(resp,404,"Invalid Menu Id")
@@ -204,7 +211,7 @@ Routes.delete('/deleteItem/:id',checkUserDetails,(req, resp) => {
         }
     });
 });
-
+// update all fields except image of menu by owner
 Routes.put('/updateItem/:id',checkUserDetails, (req, resp) => {
     const { id } = req.params;
     const { itemname, price, category, description } = req.body;
@@ -237,7 +244,7 @@ Routes.put('/updateItem/:id',checkUserDetails, (req, resp) => {
             });
         })
 });
-
+// update only image of menu by owner
 Routes.put("/updateItemImage/:id",checkUserDetails,upload.single('image'),(req,resp)=>{
     const { id } = req.params;
 
@@ -280,6 +287,27 @@ Routes.put("/updateItemImage/:id",checkUserDetails,upload.single('image'),(req,r
         });
     });
 })
+// common (customer)
+// get All users
+Routes.get("/getAllUsers",(req,resp)=>{
+    const Query=`Select id,name,phone,email,role,createdAT from ${process.env.USER_TABLE} where role='owner'`
+    Users.query(Query,(error,results)=>{
+        if(error) return handleError(resp,error)
+        if(results.length===0) return handleResponse(resp,404,"User list is empty")
+        return handleResponse(resp,202,"All Users fetched successfully",results)
+    })
+})
+// get All menu of a particular user
+Routes.get("/getAllMenus/:id",(req,resp)=>{
+    const {id} = req.params
+    if(isNaN(id)) return handleResponse(resp,400,"Restaurant id is invalid")
 
+    const Query=`Select * from ${process.env.MENU_TABLE} where user_id=?`
+    Menu.query(Query,[id],(error,results)=>{
+        if(error) return handleError(resp,error)
+        if(results.length===0) return handleResponse(resp,404,"Menu list is empty")
+        return handleResponse(resp,202,"All Menus fetched successfully",results)
+    })
+})
 
 module.exports=Routes

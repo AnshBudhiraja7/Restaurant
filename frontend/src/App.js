@@ -22,10 +22,13 @@ const App = () => {
             <Route path='/Menus' element={<Menus/>}></Route>
             <Route path='/Cart' element={<Cart/>}></Route>
             <Route path='/Login' element={<Login/>}></Route>
+            {/* This saturday */}
 
             <Route path='/owner' element={<Owners/>}></Route>
             <Route path='/Category' element={<Category/>}></Route>
+             {/* Next Monday */}
             <Route path='/Orders' element={<Orders/>}></Route>
+            {/* Next Friday ya Saturday */}
         </Routes>
       </BrowserRouter>
       </Provider>

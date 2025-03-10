@@ -1,14 +1,21 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import OrderForm from '../Components/OrderForm';
 import Header from '../Components/Header';
+import { useNavigate } from 'react-router-dom';
 
 const Cart = () => {
   const [showOrderForm, setShowOrderForm] = useState(false);
-  const [cartItems, setCartItems] = useState([
-    { name: "Burger", price: 5.99, quantity: 2 },
-    { name: "Pizza", price: 8.99, quantity: 1 },
-    { name: "Pasta", price: 7.49, quantity: 3 }
-  ]);
+  const [cartItems, setCartItems] = useState([]);
+  const navigate = useNavigate()
+
+  useEffect(() => {
+    const Selected_Restaurant= JSON.parse(localStorage.getItem("Selected-Restaurant"))
+    if(!Selected_Restaurant || !Selected_Restaurant.id){
+      localStorage.clear()
+      return navigate("/")
+    }
+    if(Selected_Restaurant.order) setCartItems(Selected_Restaurant.order)
+  },[])
 
   const handleOrderNow = () => {
     setShowOrderForm(true);
@@ -16,17 +23,28 @@ const Cart = () => {
 
   const increaseQuantity = (index) => {
     const updatedCart = [...cartItems];
-    updatedCart[index].quantity += 1;
+    updatedCart[index].qty += 1;
     setCartItems(updatedCart);
   };
 
   const decreaseQuantity = (index) => {
     const updatedCart = [...cartItems];
-    if (updatedCart[index].quantity > 1) {
-      updatedCart[index].quantity -= 1;
+    if (updatedCart[index].qty > 1) {
+      updatedCart[index].qty -= 1;
       setCartItems(updatedCart);
     }
+    else setCartItems(updatedCart.filter((item,i)=>i!==index))
   };
+
+  useEffect(()=>{
+      const Selected_Restaurant= JSON.parse(localStorage.getItem("Selected-Restaurant"))
+      if(!Selected_Restaurant || !Selected_Restaurant.id){
+        localStorage.clear()
+        return navigate("/")
+      }
+      Selected_Restaurant.order=cartItems
+      localStorage.setItem("Selected-Restaurant",JSON.stringify(Selected_Restaurant))
+  },[cartItems])
 
   return (
     <div>
@@ -43,21 +61,21 @@ const Cart = () => {
           </tr>
         </thead>
         <tbody>
-          {cartItems.map((item, index) => (
+          {cartItems.length>0 ? cartItems?.map((item, index) => (
             <tr key={index}>
-              <td>{item.name}</td>
-              <td>${item.price.toFixed(2)}</td>
+              <td>{item.product_name}</td>
+              <td>₹{item.price.toFixed(2)}/-</td>
               <td>
                 <button className="btn btn-sm btn-danger" onClick={() => decreaseQuantity(index)}>-</button>
-                <span className="mx-2">{item.quantity}</span>
+                <span className="mx-2">{item.qty}</span>
                 <button className="btn btn-sm btn-success" onClick={() => increaseQuantity(index)}>+</button>
               </td>
-              <td>${(item.price * item.quantity).toFixed(2)}</td>
+              <td>₹{(item.price * item.qty).toFixed(2)}/-</td>
             </tr>
-          ))}
+          )):<tr className='text-center'><td colSpan={4}>No Menu Found</td></tr>}
         </tbody>
       </table>
-      <button className="btn btn-success w-100" onClick={handleOrderNow}>Order Now</button>
+      <button disabled={cartItems.length===0?true:false} className="btn btn-success w-100" onClick={handleOrderNow}>Order Now</button>
       {showOrderForm && <OrderForm />}
     </div>
     </div>
