@@ -9,6 +9,7 @@ import Owners from './Owner/Pages/Owners'
 import Orders from './Owner/Pages/Orders'
 import Superadmin from './Superadmin/Pages/Superadmin'
 import Store from './Redux/Store/Store'
+import Category from './Owner/Pages/Category'
 const App = () => {
   return (
     <div>
@@ -23,6 +24,7 @@ const App = () => {
             <Route path='/Login' element={<Login/>}></Route>
 
             <Route path='/owner' element={<Owners/>}></Route>
+            <Route path='/Category' element={<Category/>}></Route>
             <Route path='/Orders' element={<Orders/>}></Route>
         </Routes>
       </BrowserRouter>
