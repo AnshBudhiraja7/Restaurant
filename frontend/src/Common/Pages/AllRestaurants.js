@@ -1,25 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import {useNavigate} from "react-router-dom"
-import Axios from '../../Axios';
+import {useDispatch,useSelector} from "react-redux"
+import AllUsersThunk from '../../Redux/Reducers/AllUsers/AllUsersThunk';
 const AllRestaurants = () => {
-  const[users,setusers]=useState([])
+  const users = useSelector(state=> state.AllUsers.users || [])
   const navigate=useNavigate()
-  const getAllUsers=async()=>{
-    try {
-      const response=await Axios.get("getAllUsers")
-      setusers(response?.data?.data)
-    } catch (error) {
-      if (error.response) {
-        alert(error.response.data.message);
-      } else if (error.request) {
-        alert('No response from server');
-      } else {
-        alert('An unexpected error occurred');
-      }
-    }
-  }
+  const dispatch=useDispatch()
   useEffect(()=>{
-    getAllUsers()
+    dispatch(AllUsersThunk())
   },[])
   const view = (id) => {
     localStorage.setItem("Selected-Restaurant",JSON.stringify({id}))

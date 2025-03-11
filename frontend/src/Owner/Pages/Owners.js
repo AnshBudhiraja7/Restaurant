@@ -4,17 +4,17 @@ import { useNavigate } from 'react-router-dom';
 import Axios from '../../Axios';
 
 const Owners = () => {
-    const [menuItems, setMenuItems] = useState([]);
-    const [editItems, seteditItems] = useState(null);
-    const [showModal, setShowModal] = useState(false);
-    const [editimageid, seteditimageid] = useState(null)
-    const [updatedimage, setupdatedimage] = useState(null)
-    const imageRef = useRef()
-    const newimageRef = useRef()
-    const [image, setimage] = useState(null)
-    const [categories, setcategories] = useState([])
-    const [newItem, setNewItem] = useState({ name: "", price: "", description: "",category:"none" });
-    const [loading, setloading] = useState(false)
+    const [menuItems, setMenuItems] = useState([]); // menu
+    const [editItems, seteditItems] = useState(null); //
+    const [showModal, setShowModal] = useState(false); //
+    const [editimageid, seteditimageid] = useState(null) //
+    const [updatedimage, setupdatedimage] = useState(null) //
+    const imageRef = useRef() //
+    const newimageRef = useRef() //
+    const [image, setimage] = useState(null) 
+    const [categories, setcategories] = useState([])// categories
+    const [newItem, setNewItem] = useState({ name: "", price: "", description: "",category:"none" }); //obj
+    const [loading, setloading] = useState(false) // loading
     const navigate = useNavigate()
     const getAllCategories=async(token)=>{
       try {
@@ -55,8 +55,8 @@ const Owners = () => {
       const getdata=async()=>{
         const auth=JSON.parse(localStorage.getItem("Authorization"))
         if(auth && auth.token) {
-          await getAllCategories(auth.token)
-          return await getAllMenus(auth.token)
+          await getAllCategories(auth.token) // fetch Categories
+          return await getAllMenus(auth.token)  // fetch Menus
         }
         localStorage.clear()
         return navigate("/")
@@ -78,16 +78,6 @@ const Owners = () => {
       setimage(files)
      };
 
-     const handleNewImage=(e)=>{
-      const files=e.target.files[0]
-      if(!files) return alert("Upload the image first")
-      const type= files.type.split("/")
-      if(type[0]!=="image") return alert("Only image is allowed")
-      const alltypes=["jpg","jpeg","png","PNG"]
-      if(!alltypes.includes(type[1])) return alert("Only jpg,jpeg and png images are allowed")
-      setupdatedimage(files)
-     }
-  
     const handleUpload = async(e) => {
       e.preventDefault();
       try {
@@ -124,6 +114,16 @@ const Owners = () => {
         setloading(false)
        }
     };
+
+    const handleNewImage=(e)=>{
+      const files=e.target.files[0]
+      if(!files) return alert("Upload the image first")
+      const type= files.type.split("/")
+      if(type[0]!=="image") return alert("Only image is allowed")
+      const alltypes=["jpg","jpeg","png","PNG"]
+      if(!alltypes.includes(type[1])) return alert("Only jpg,jpeg and png images are allowed")
+      setupdatedimage(files)
+     }
   
     const handleDelete =async (id) => {
       try {
